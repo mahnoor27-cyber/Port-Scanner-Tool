@@ -18,6 +18,24 @@ def is_host_up(ip):
     except Exception as e:
         return False
 
+# Function to get the MAC address for a given IP
+def get_mac_address(ip):
+    try:
+        output = subprocess.run(
+            ["arp", "-a", ip],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        lines = output.stdout.splitlines()
+        for line in lines:
+            if ip in line:
+                parts = line.split()
+                return parts[1] if len(parts) > 1 else "MAC Not Found"
+        return "MAC Not Found"
+    except Exception as e:
+        return "Error Retrieving MAC"
+
 # Function to scan a single port
 def scan_port(ip, port, results_queue):
     try:
@@ -82,6 +100,11 @@ def start_scan():
     # Check if host is up
     if is_host_up(target_ip):
         output_text.insert(tk.END, f"Host {target_ip} is Up.\n")
+        
+        # Get and display the MAC address
+        mac_address = get_mac_address(target_ip)
+        output_text.insert(tk.END, f"MAC Address for {target_ip}: {mac_address}\n")
+        
         scan_ports(target_ip, start_port, end_port, output_text)
     else:
         output_text.insert(tk.END, f"Host {target_ip} is Not Up.\n")
@@ -97,7 +120,7 @@ def exit_app():
 # Create the GUI
 window = tk.Tk()
 window.title("Port Scanner")
-window.geometry("600x400")
+window.geometry("600x450")
 window.config(bg="#2d3e50")  # Set a dark blue-gray background
 
 # Header
